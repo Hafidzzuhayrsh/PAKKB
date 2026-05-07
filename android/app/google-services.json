@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "165397405082",
+    "project_id": "app-pengaduan-71ba1",
+    "storage_bucket": "app-pengaduan-71ba1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165397405082:android:0dd455946e8da43e89ee23",
+        "android_client_info": {
+          "package_name": "com.example.app_pengaduan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw1F-lHN-sxXSsU9MImfR9X5PvE7xHp3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165397405082:android:a31fab8cac04a1fc89ee23",
+        "android_client_info": {
+          "package_name": "com.example.cots_flutter_application_103022300131"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw1F-lHN-sxXSsU9MImfR9X5PvE7xHp3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
