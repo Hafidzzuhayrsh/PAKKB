@@ -8,7 +8,7 @@ class PengaduanService {
     required String userId,
     String? nik,
   }) {
-    return _col.orderBy('createdAt', descending: true).snapshots().map((snap) {
+    return _col.orderBy('created_at', descending: true).snapshots().map((snap) {
       final all = snap.docs
           .map((d) => PengaduanModel.fromFirestore(d))
           .toList();
@@ -24,5 +24,16 @@ class PengaduanService {
 
   Future<void> submitPengaduan(PengaduanModel p) async {
     await _col.add(p.toMap());
+  }
+
+  Future<void> updatePengaduan(String id, String judul, String deskripsi) async {
+    await _col.doc(id).update({
+      'judul': judul,
+      'deskripsi': deskripsi,
+    });
+  }
+
+  Future<void> deletePengaduan(String id) async {
+    await _col.doc(id).delete();
   }
 }

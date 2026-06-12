@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/auth_provider.dart';
 import 'package:app_pengaduan/theme/app_theme.dart';
 import 'package:app_pengaduan/views/pengaturan_akun_page.dart';
+import 'package:app_pengaduan/views/notification_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -81,7 +82,7 @@ class ProfilePage extends StatelessWidget {
                                   ),
                                 ],
                                 image: const DecorationImage(
-                                  image: NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
+                                  image: AssetImage('assets/images/user_profile.png'),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -185,7 +186,17 @@ class ProfilePage extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              _buildMenuItem(Icons.history, 'Riwayat Laporan', isGreen: true),
+                              _buildMenuItem(
+                                Icons.history, 
+                                'Riwayat Laporan', 
+                                isGreen: true,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const NotificationPage()),
+                                  );
+                                },
+                              ),
                               const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
                               _buildMenuItem(
                                 Icons.settings_outlined, 

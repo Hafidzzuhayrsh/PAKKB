@@ -17,19 +17,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
     {
       "title": "Pantau Progres Laporan",
       "description": "Kirim pengaduan dan pantau status penanganannya secara real-time hingga selesai.",
-      "image": "report", // Placeholder identifier
+      "image": "assets/images/foto_dummy_2.jpg",
       "tag": "PENGADUAN DIGITAL"
     },
     {
       "title": "Layanan Publik Terpadu",
       "description": "Akses berbagai layanan publik mulai dari informasi hingga pengaduan dalam satu aplikasi.",
-      "image": "services",
+      "image": "assets/images/foto_dummy_3.png",
       "tag": "LAYANAN TERPADU"
     },
     {
       "title": "Konsultasi Ahli",
       "description": "Konsultasikan masalah keluarga, psikologi, atau parenting langsung dengan ahlinya secara aman.",
-      "image": "consult",
+      "image": "assets/images/konsultasi_psikolog.png",
       "tag": "KONSULTASI ONLINE"
     },
   ];
@@ -156,14 +156,14 @@ class OnboardingContent extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Icon(
-                  imageType == "report"
-                      ? Icons.receipt_long
-                      : imageType == "services"
-                          ? Icons.widgets
-                          : Icons.support_agent,
-                  size: 120,
-                  color: AppTheme.primary.withOpacity(0.5),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image.asset(
+                    imageType,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 Positioned(
                   bottom: 20,

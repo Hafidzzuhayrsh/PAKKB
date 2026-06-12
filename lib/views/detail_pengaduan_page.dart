@@ -1,17 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:app_pengaduan/theme/app_theme.dart';
 import '../model/pengaduan_model.dart';
+import '../services/pengaduan_service.dart';
+import 'package:app_pengaduan/views/edit_pengaduan_page.dart';
 
-class DetailPengaduanPage extends StatelessWidget {
+class DetailPengaduanPage extends StatefulWidget {
   final PengaduanModel? pengaduan;
 
   const DetailPengaduanPage({super.key, this.pengaduan});
 
   @override
+  State<DetailPengaduanPage> createState() => _DetailPengaduanPageState();
+}
+
+class _DetailPengaduanPageState extends State<DetailPengaduanPage> {
+  bool _isDeleting = false;
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Batalkan Laporan?', textAlign: TextAlign.center),
+        content: const Text(
+          'Laporan ini akan dihapus secara permanen dan tidak dapat dikembalikan.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Tidak'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Ya, Hapus', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && widget.pengaduan?.id != null) {
+      setState(() => _isDeleting = true);
+      try {
+        await PengaduanService().deletePengaduan(widget.pengaduan!.id!);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Laporan berhasil dibatalkan'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          // Kembali ke halaman utama
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal membatalkan laporan: $e')),
+          );
+        }
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Dummy data for presentation if pengaduan is null
+    final pengaduan = widget.pengaduan;
     final String title = pengaduan?.judul ?? 'Lubang di Jalan Utama';
-    final String desc = pengaduan?.deskripsi ?? 'Terdapat lubang jalan yang cukup dalam dan lebar di sekitar persimpangan Jl. Sudirman menuju Jl. Gatot Subroto. Lubang ini sangat membahayakan pengendara terutama di malam hari karena minim penerangan jalan. Mohon segera diperbaiki sebelum memakan korban jiwa.';
+    final String desc = pengaduan?.deskripsi ?? 'Terdapat lubang jalan yang cukup dalam dan lebar.';
     final String status = pengaduan?.status ?? 'Sedang Diproses';
     
     return Scaffold(
@@ -184,205 +251,59 @@ class DetailPengaduanPage extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-
-            // Foto Lampiran
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(20),
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Foto Lampiran',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                      ),
-                      Text('2 Foto', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            children: [
-                              Container(
-                                height: 80,
-                                margin: const EdgeInsets.only(bottom: 8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFD1D5DB),
-                                  borderRadius: BorderRadius.circular(12),
-                                  image: const DecorationImage(
-                                    image: NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFD1D5DB),
-                                  borderRadius: BorderRadius.circular(12),
-                                  image: const DecorationImage(
-                                    image: NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704f'),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            height: 168,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD1D5DB),
-                              borderRadius: BorderRadius.circular(12),
-                              image: const DecorationImage(
-                                image: NetworkImage('https://i.pravatar.cc/300?u=a042581f4e29026704g'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Lokasi Kejadian (GPS Mockup)
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(20),
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Lokasi Kejadian',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryLight.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.navigation, size: 14, color: AppTheme.primary),
-                            SizedBox(width: 4),
-                            Text('Navigasi', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE5E7EB), // Mockup map background
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Mockup streets
-                        Positioned(
-                          top: 50,
-                          left: -50,
-                          right: -50,
-                          child: Container(height: 20, color: Colors.white),
-                        ),
-                        Positioned(
-                          top: -50,
-                          bottom: -50,
-                          left: 150,
-                          child: Container(width: 20, color: Colors.white),
-                        ),
-                        // Pin
-                        const Icon(Icons.location_on, color: Colors.red, size: 48),
-                        Positioned(
-                          bottom: 30,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
-                              ]
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Row(
-                    children: [
-                      Icon(Icons.location_on_outlined, color: AppTheme.textSecondary, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Jl. Jend. Sudirman Kav 52, Jakarta Pusat',
-                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             
-            // Buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: const Text('Edit Laporan', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textPrimary,
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+            // Action Buttons
+            if (pengaduan != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
                   children: [
-                    Icon(Icons.cancel_outlined, size: 18, color: AppTheme.textSecondary),
-                    SizedBox(width: 8),
-                    Text('Batalkan Laporan', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditPengaduanPage(pengaduan: pengaduan!),
+                            ),
+                          ).then((_) {
+                            // You might want to refresh the detail page or pop it so user goes back to dashboard to see updated data.
+                            Navigator.pop(context);
+                          });
+                        },
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('Edit'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primary,
+                          side: const BorderSide(color: AppTheme.primary),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _isDeleting ? null : () => _confirmDelete(context),
+                        icon: _isDeleting
+                            ? const SizedBox(
+                                width: 16, height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red),
+                              )
+                            : const Icon(Icons.cancel_outlined, size: 18),
+                        label: Text(_isDeleting ? 'Menghapus...' : 'Batalkan'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
             const SizedBox(height: 40),
           ],
         ),

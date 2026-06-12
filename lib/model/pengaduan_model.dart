@@ -14,16 +14,18 @@ class PengaduanModel {
 
   PengaduanModel({
     this.id,
-    required this.kategori,
-    required this.nama,
+    this.kategori = '',
+    this.nama = '',
     required this.nik,
-    required this.noHp,
-    required this.alamat,
-    required this.keluhan,
+    this.noHp = '',
+    this.alamat = '',
+    this.keluhan = '',
     this.imageUrl,
     required this.status,
     required this.createdAt,
-  });
+    String? judul,
+    String? userId,
+  }) : _judul = judul, _userId = userId;
 
   // --- Adapters for Backward Compatibility (from Local changes) ---
   String get fullname => nama;
@@ -53,6 +55,8 @@ class PengaduanModel {
 
   Map<String, dynamic> toMap() {
     return {
+      'judul': judul,
+      'deskripsi': deskripsi,
       'kategori': kategori,
       'nama': nama,
       'nik': nik,
@@ -61,6 +65,7 @@ class PengaduanModel {
       'keluhan': keluhan,
       'image_url': imageUrl,
       'status': status,
+      'userId': userId,
       'created_at': Timestamp.fromDate(createdAt),
     };
   }
@@ -85,18 +90,25 @@ class PengaduanModel {
       nik: data['nik'] ?? '',
       noHp: data['no_hp'] ?? data['phone'] ?? '',
       alamat: data['alamat'] ?? data['address'] ?? '',
-      keluhan: data['keluhan'] ?? data['description'] ?? '',
+      keluhan: data['keluhan'] ?? data['deskripsi'] ?? data['description'] ?? '',
       imageUrl: data['image_url'] ?? data['imageUrl'],
       status: data['status'] ?? 'menunggu',
       createdAt: date,
+      judul: data['judul'],
+      userId: data['userId'],
     );
   }
 
-  Null get tanggal => null;
+  String get tanggal {
+    return createdAt.toString();
+  }
 
-  Null get deskripsi => null;
-
-  String? get judul => null;
-
-  Null get userId => null;
+  String get deskripsi => keluhan;
+  
+  // Custom properties for the new format
+  final String? _judul;
+  final String? _userId;
+  
+  String? get judul => _judul ?? kategori;
+  String? get userId => _userId;
 }

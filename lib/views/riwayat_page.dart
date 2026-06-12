@@ -228,7 +228,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                         ),
                       ),
                       const Spacer(),
-                      Text(data.tanggal, style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                      Text(data.tanggal ?? '', style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
                     ],
                   ),
                   const SizedBox(height: 8),

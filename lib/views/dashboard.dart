@@ -5,7 +5,15 @@ import 'package:app_pengaduan/views/services/konsultasi_main_page.dart';
 import 'package:app_pengaduan/views/chat/chat_list_page.dart';
 import 'package:app_pengaduan/views/chat_konsultasi_page.dart';
 import 'package:app_pengaduan/views/detail_pengaduan_page.dart';
+import 'package:app_pengaduan/views/kategori_pengaduan.dart';
+import 'package:app_pengaduan/views/informasi_kesehatan.dart';
 import 'package:app_pengaduan/views/keluarga_berencana.dart';
+import 'package:app_pengaduan/views/notification_page.dart';
+import 'package:app_pengaduan/services/pengaduan_service.dart';
+import 'package:app_pengaduan/model/pengaduan_model.dart';
+import 'package:provider/provider.dart';
+import 'package:app_pengaduan/viewmodels/auth_provider.dart' as custom_auth;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -69,6 +77,10 @@ class HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<custom_auth.AuthProvider>();
+    final userId = authProvider.currentUserData?.uid ?? FirebaseAuth.instance.currentUser?.uid;
+    final nik = authProvider.currentUserData?.nik;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -99,22 +111,30 @@ class HomeContent extends StatelessWidget {
                     )
                   ],
                 ),
-                Stack(
-                  children: [
-                    const Icon(Icons.notifications_outlined, size: 28),
-                    Positioned(
-                      right: 2,
-                      top: 2,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationPage()),
+                    );
+                  },
+                  child: Stack(
+                    children: [
+                      const Icon(Icons.notifications_outlined, size: 28),
+                      Positioned(
+                        right: 2,
+                        top: 2,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    )
-                  ],
+                      )
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -196,7 +216,7 @@ class HomeContent extends StatelessWidget {
                   "Pengaduan", 
                   Icons.campaign_outlined, 
                   const Color(0xFFFFF0F0),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DetailPengaduanPage())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const KategoriPengaduanPage())),
                 ),
                 _buildCategoryItem(
                   context, 
@@ -210,6 +230,7 @@ class HomeContent extends StatelessWidget {
                   "Informasi", 
                   Icons.info_outline, 
                   const Color(0xFFFFF7ED),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InformasiKesehatanPage())),
                 ),
               ],
             ),
@@ -227,9 +248,46 @@ class HomeContent extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            _buildActivityCard('Perbaikan Lampu Jalan #8812', 'Dalam Proses', Colors.blue),
-            const SizedBox(height: 12),
-            _buildActivityCard('Sampah Menumpuk #8790', 'Selesai', AppTheme.primary),
+            if (userId != null)
+              StreamBuilder<List<PengaduanModel>>(
+                stream: PengaduanService().getMyHistory(userId: userId, nik: nik),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text("Belum ada aktivitas terbaru.", style: TextStyle(color: AppTheme.textSecondary)),
+                      ),
+                    );
+                  }
+
+                  final activities = snapshot.data!.take(5).toList(); // Show top 5
+                  return Column(
+                    children: activities.map((activity) {
+                      bool isResolved = activity.status.toLowerCase() == 'selesai';
+                      Color statusColor = isResolved ? AppTheme.primary : Colors.blue;
+                      String statusText = isResolved ? 'Selesai' : 'Dalam Proses';
+                      
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: _buildActivityCard(
+                          activity.judul ?? 'Laporan Pengaduan', 
+                          statusText, 
+                          statusColor,
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => DetailPengaduanPage(pengaduan: activity)));
+                          }
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              )
+            else
+              const Center(child: Text("Silakan login untuk melihat aktivitas terbaru.")),
           ],
         ),
       ),
@@ -306,49 +364,52 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildActivityCard(String title, String status, Color statusColor) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+  Widget _buildActivityCard(String title, String status, Color statusColor, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.assignment, color: statusColor),
             ),
-            child: Icon(Icons.assignment, color: statusColor),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(status, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w600)),
-                    const SizedBox(width: 8),
-                    const Text('2 hari yang lalu', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                  ],
-                ),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(status, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 8),
+                      const Text('Baru saja', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
-        ],
+            const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+          ],
+        ),
       ),
     );
   }
