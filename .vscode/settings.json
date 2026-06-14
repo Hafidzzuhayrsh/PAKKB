@@ -1,4 +1,5 @@
 {
     "cmake.sourceDirectory": "D:/Mobile/sistem-manajemen-keluarga-berencana-/windows",
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "cmake.ignoreCMakeListsMissing": true
 }
