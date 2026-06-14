@@ -13,9 +13,10 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _nikController = TextEditingController(); 
+  final TextEditingController _nikController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController(); // Added phone as per design
+  final TextEditingController _phoneController =
+      TextEditingController(); // Added phone as per design
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _agreeToTerms = false;
@@ -24,47 +25,96 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Anda harus menyetujui Syarat dan Ketentuan')),
+        const SnackBar(
+          content: Text('Anda harus menyetujui Syarat dan Ketentuan'),
+        ),
       );
       return;
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    final success = await authProvider.signUp(
-      _emailController.text,
-      _passwordController.text,
-      _nameController.text,
-      _nikController.text, 
-    );
+    try {
+      final success = await authProvider.signUp(
+        _emailController.text.trim(),
+        _passwordController.text,
+        _nameController.text.trim(),
+        _nikController.text.trim(),
+      );
 
-    if (success) {
       if (!mounted) return;
 
-      final user = authProvider.user;
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Registrasi Berhasil! Silakan cek email untuk verifikasi.',
+      if (success) {
+        final user = authProvider.user;
+
+        if (user != null && !user.emailVerified) {
+          try {
+            await user.sendEmailVerification();
+          } catch (e) {
+            debugPrint("Email verification error: $e");
+          }
+        }
+
+        if (!mounted) return;
+
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text("Registrasi Berhasil"),
+            content: const Text(
+              "Akun berhasil dibuat.\n\n"
+              "Email verifikasi telah dikirim ke alamat email Anda.\n"
+              "Silakan cek Inbox atau folder Spam untuk melakukan verifikasi.",
             ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("OK"),
+              ),
+            ],
           ),
         );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Registrasi Berhasil!')));
-      }
 
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil('/dashboard', (route) => false);
-    } else {
+        if (!mounted) return;
+
+        // Kembali ke halaman Login
+        Navigator.pop(context);
+      } else {
+        if (!mounted) return;
+
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Registrasi Gagal"),
+            content: const Text(
+              "Email mungkin sudah terdaftar atau terjadi kesalahan sistem.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registrasi Gagal. Email mungkin sudah terdaftar.'),
+
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Registrasi Gagal"),
+          content: Text("Terjadi kesalahan:\n$e"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
         ),
       );
     }
@@ -73,9 +123,8 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _nikController.dispose(); 
+    _nikController.dispose(); // [NEW]
     _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -125,10 +174,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 8),
                 const Text(
                   'Lengkapi data diri untuk bergabung dengan ServiceHub.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -144,15 +190,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       : null,
                 ),
                 const SizedBox(height: 16),
-                
+
                 _buildLabel('NIK'),
                 _buildTextField(
                   controller: _nikController,
                   hint: '16 digit NIK',
                   icon: Icons.credit_card,
                   keyboardType: TextInputType.number,
-                  validator: (value) =>
-                      (value == null || value.length != 16)
+                  validator: (value) => (value == null || value.length != 16)
                       ? 'NIK harus 16 digit'
                       : null,
                 ),
@@ -187,11 +232,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       ? 'Min. 6 karakter'
                       : null,
                   decoration: InputDecoration(
-                    hintText: '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022',
+                    hintText:
+                        '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: AppTheme.textSecondary,
                       ),
                       onPressed: () {
@@ -225,7 +273,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     const Expanded(
                       child: Text(
                         'Saya menyetujui Syarat dan Ketentuan serta Kebijakan Privasi.',
-                        style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -240,7 +291,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           ? const SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(color: Colors.white),
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
                             )
                           : const Text('Daftar'),
                     );
@@ -297,10 +350,7 @@ class _RegisterPageState extends State<RegisterPage> {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: Icon(icon),
-      ),
+      decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icon)),
     );
   }
 }
