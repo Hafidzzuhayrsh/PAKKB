@@ -77,7 +77,8 @@ class ChatListPage extends StatelessWidget {
         ],
       ),
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatKonsultasiPage()));
+        final doctorId = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+        Navigator.push(context, MaterialPageRoute(builder: (context) => ChatKonsultasiPage(title: name, categoryId: doctorId)));
       },
     );
   }

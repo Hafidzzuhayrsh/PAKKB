@@ -74,12 +74,13 @@ class AuthProvider with ChangeNotifier {
     String password,
     String name,
     String nik,
+    String phone,
   ) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      _user = await _authService.signUp(email, password, name, nik);
+      _user = await _authService.signUp(email, password, name, nik, phone);
 
       if (_user != null) {
         await fetchUserData();

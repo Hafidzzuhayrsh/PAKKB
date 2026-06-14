@@ -58,6 +58,7 @@ class AuthService {
     String password,
     String name,
     String nik,
+    String phone,
   ) async {
     try {
       // 1. Create User
@@ -69,12 +70,19 @@ class AuthService {
 
       if (user != null) {
         // 2. Save User Data (Role: User)
-        String? token = await _firebaseMessaging.getToken();
+        String? token;
+        try {
+          token = await _firebaseMessaging.getToken();
+        } catch (e) {
+          print('Error getting FCM token during signup: $e');
+        }
+        
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'email': email,
           'name': name,
-          'nik': nik, // [NEW] Save NIK
+          'nik': nik, 
+          'phone': phone, // Save phone
           'role': 'user', // Default role
           'createdAt': FieldValue.serverTimestamp(),
           'fcmToken': token,

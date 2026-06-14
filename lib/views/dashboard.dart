@@ -5,12 +5,15 @@ import 'package:app_pengaduan/views/services/konsultasi_main_page.dart';
 import 'package:app_pengaduan/views/chat/chat_list_page.dart';
 import 'package:app_pengaduan/views/chat_konsultasi_page.dart';
 import 'package:app_pengaduan/views/detail_pengaduan_page.dart';
+import 'package:app_pengaduan/views/detail_kb_page.dart'; // [NEW] Detail KB
 import 'package:app_pengaduan/views/kategori_pengaduan.dart';
 import 'package:app_pengaduan/views/informasi_kesehatan.dart';
 import 'package:app_pengaduan/views/keluarga_berencana.dart';
 import 'package:app_pengaduan/views/notification_page.dart';
 import 'package:app_pengaduan/services/pengaduan_service.dart';
+import 'package:app_pengaduan/services/kb_service.dart' as kb_service; // [NEW] KB Service
 import 'package:app_pengaduan/model/pengaduan_model.dart';
+import 'package:app_pengaduan/model/kb_model.dart'; // [NEW] KB Model
 import 'package:provider/provider.dart';
 import 'package:app_pengaduan/viewmodels/auth_provider.dart' as custom_auth;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -72,8 +75,32 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-class HomeContent extends StatelessWidget {
+class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
+
+  @override
+  State<HomeContent> createState() => _HomeContentState();
+}
+
+class _HomeContentState extends State<HomeContent> {
+  Key _refreshKey = UniqueKey();
+
+  Future<List<dynamic>> _fetchCombinedHistory(String userId, String? nik) async {
+    // We use first to get the latest snapshot of the stream as a future
+    final pengaduanStream = PengaduanService().getMyHistory(userId: userId, nik: nik).first;
+    final kbFuture = kb_service.FirebaseService().getPendaftaran(userId: userId, nik: nik);
+    
+    final results = await Future.wait([pengaduanStream, kbFuture]);
+    final list = [...results[0] as List<PengaduanModel>, ...results[1] as List<KbModel>];
+    
+    // Sort descending by date
+    list.sort((a, b) {
+       DateTime dateA = a is PengaduanModel ? a.createdAt ?? DateTime.now() : (a as KbModel).tanggal;
+       DateTime dateB = b is PengaduanModel ? b.createdAt ?? DateTime.now() : (b as KbModel).tanggal;
+       return dateB.compareTo(dateA);
+    });
+    return list;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +250,9 @@ class HomeContent extends StatelessWidget {
                   "Daftar KB", 
                   Icons.family_restroom, 
                   const Color(0xFFF0F9FF),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const KbFormPage())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const KbFormPage())).then((_) {
+                    setState(() => _refreshKey = UniqueKey());
+                  }),
                 ),
                 _buildCategoryItem(
                   context, 
@@ -244,13 +273,21 @@ class HomeContent extends StatelessWidget {
                   "Aktivitas Terbaru",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                IconButton(onPressed: () {}, icon: const Icon(Icons.refresh, size: 20)),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _refreshKey = UniqueKey();
+                    });
+                  }, 
+                  icon: const Icon(Icons.refresh, size: 20)
+                ),
               ],
             ),
             const SizedBox(height: 12),
             if (userId != null)
-              StreamBuilder<List<PengaduanModel>>(
-                stream: PengaduanService().getMyHistory(userId: userId, nik: nik),
+              FutureBuilder<List<dynamic>>(
+                key: _refreshKey,
+                future: _fetchCombinedHistory(userId, nik),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -267,18 +304,32 @@ class HomeContent extends StatelessWidget {
                   final activities = snapshot.data!.take(5).toList(); // Show top 5
                   return Column(
                     children: activities.map((activity) {
-                      bool isResolved = activity.status.toLowerCase() == 'selesai';
+                      bool isPengaduan = activity is PengaduanModel;
+                      
+                      String title = isPengaduan ? (activity.judul ?? 'Laporan Pengaduan') : 'Pendaftaran KB ${(activity as KbModel).layanan}';
+                      String statusRaw = isPengaduan ? activity.status : (activity as KbModel).status;
+                      
+                      bool isResolved = statusRaw.toLowerCase() == 'selesai' || statusRaw.toLowerCase() == 'disetujui';
                       Color statusColor = isResolved ? AppTheme.primary : Colors.blue;
                       String statusText = isResolved ? 'Selesai' : 'Dalam Proses';
                       
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: _buildActivityCard(
-                          activity.judul ?? 'Laporan Pengaduan', 
+                          title, 
                           statusText, 
                           statusColor,
+                          isPengaduan ? Icons.assignment : Icons.family_restroom,
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => DetailPengaduanPage(pengaduan: activity)));
+                            if (isPengaduan) {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailPengaduanPage(pengaduan: activity as PengaduanModel))).then((_) {
+                                setState(() => _refreshKey = UniqueKey());
+                              });
+                            } else {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailKbPage(kb: activity as KbModel))).then((_) {
+                                setState(() => _refreshKey = UniqueKey());
+                              });
+                            }
                           }
                         ),
                       );
@@ -364,7 +415,7 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildActivityCard(String title, String status, Color statusColor, {VoidCallback? onTap}) {
+  Widget _buildActivityCard(String title, String status, Color statusColor, IconData icon, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -382,7 +433,7 @@ class HomeContent extends StatelessWidget {
                 color: statusColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.assignment, color: statusColor),
+              child: Icon(icon, color: statusColor),
             ),
             const SizedBox(width: 16),
             Expanded(

@@ -128,6 +128,34 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     });
   }
 
+  List<Widget> _buildDummyMessages(BuildContext context) {
+    final doctorName = widget.title;
+
+    if (doctorName.contains('Sarah')) {
+      return [
+        _buildConsultantMessage(context, "Halo! Saya Dr. Sarah. Bagaimana perasaan Anda hari ini? Silakan ceritakan keluhan Anda agar saya bisa membantu.", doctorName, "10:15 AM"),
+        _buildUserMessage(context, "Halo Dok, saya sudah batuk terus-menerus dan sedikit demam sejak kemarin pagi.", "10:18 AM"),
+        _buildConsultantMessage(context, "Baik, saya mengerti. Bisa tolong kirimkan foto resep obat yang sedang Anda konsumsi atau foto pengukuran suhu tubuh Anda?", doctorName, "10:20 AM"),
+        _buildUserMessage(context, "Ini suhu badan saya 10 menit yang lalu.", "10:22 AM", hasImage: true),
+        _buildConsultantMessage(context, "Silakan kirimkan foto resepnya.", doctorName, "10:30 AM"),
+      ];
+    } else if (doctorName.contains('Budi')) {
+      return [
+        _buildConsultantMessage(context, "Selamat pagi! Saya Dr. Budi. Ada yang bisa saya bantu mengenai program KB Anda?", doctorName, "09:00 AM"),
+        _buildUserMessage(context, "Pagi Dok, saya mau konsultasi soal jadwal kontrol KB berikutnya.", "09:02 AM"),
+        _buildConsultantMessage(context, "Tentu, kapan terakhir kali Anda melakukan kontrol? Dan metode KB apa yang sedang digunakan?", doctorName, "09:05 AM"),
+        _buildUserMessage(context, "Terakhir kontrol 3 bulan lalu Dok, saya pakai KB suntik.", "09:08 AM"),
+        _buildConsultantMessage(context, "Baik, untuk KB suntik 3 bulan, seharusnya sudah waktunya kontrol kembali. Silakan datang ke klinik minggu ini ya.", doctorName, "09:10 AM"),
+        _buildUserMessage(context, "Terima kasih, sampai jumpa di sesi berikutnya.", "09:12 AM"),
+      ];
+    } else {
+      return [
+        _buildConsultantMessage(context, "Halo! Selamat datang di layanan konsultasi. Ada yang bisa saya bantu?", doctorName, "10:00 AM"),
+        _buildUserMessage(context, "Halo Dok, saya ingin berkonsultasi.", "10:02 AM"),
+      ];
+    }
+  }
+
   Widget _buildMessageItem(Map<String, dynamic> data) {
     final senderId = data['senderId'] as String? ?? '';
     final text = data['text'] as String? ?? '';
@@ -379,8 +407,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        'Online \u2022 General Practitioner',
+                      Text(
+                        'Online \u2022 ${widget.title.contains('Budi') ? 'Spesialis KB' : 'General Practitioner'}',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.textSecondary,
@@ -434,12 +462,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                    return ListView(
                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                     children: [
-                       _buildConsultantMessage(context, "Hello! I'm Dr. Sarah. How are you feeling today? Please describe your symptoms so I can assist you better.", "Dr. Sarah Johnson", "10:15 AM"),
-                       _buildUserMessage(context, "Hi Doctor, I've been having a persistent cough and a slight fever since yesterday morning.", "10:18 AM"),
-                       _buildConsultantMessage(context, "I understand. Could you please send a photo of any prescriptions you're currently taking or a photo of your thermometer reading?", "Dr. Sarah Johnson", "10:20 AM"),
-                       _buildUserMessage(context, "This is my temperature from 10 minutes ago.", "10:22 AM", hasImage: true),
-                     ],
+                     children: _buildDummyMessages(context),
                    );
                 }
 

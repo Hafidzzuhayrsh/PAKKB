@@ -216,9 +216,31 @@ class ProfilePage extends StatelessWidget {
                                 'Keluar',
                                 isRed: true,
                                 onTap: () async {
-                                  await authProvider.signOut();
-                                  if (context.mounted) {
-                                    Navigator.of(context).popUntil((route) => route.isFirst);
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      title: const Text('Konfirmasi Keluar', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text('Batal', style: TextStyle(color: AppTheme.textSecondary)),
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                          onPressed: () => Navigator.pop(context, true),
+                                          child: const Text('Ya, Keluar', style: TextStyle(color: Colors.white)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirm == true) {
+                                    await authProvider.signOut();
+                                    if (context.mounted) {
+                                      Navigator.of(context).popUntil((route) => route.isFirst);
+                                    }
                                   }
                                 },
                               ),

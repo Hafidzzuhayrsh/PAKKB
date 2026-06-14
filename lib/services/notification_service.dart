@@ -53,8 +53,18 @@ class NotificationService {
       // Fungsi untuk menggabungkan dan mengirim data ke UI
       void emit() {
         final combined = [...list1, ...list2];
-        // Opsi: Urutkan data berdasarkan waktu jika diperlukan (di sini default gabung saja)
-        controller.add(combined);
+        
+        // Ensure unique by ID (in case a notification matches both userId and recipientNik)
+        final uniqueMap = <String, NotificationModel>{};
+        for (var item in combined) {
+          uniqueMap[item.id] = item;
+        }
+        final uniqueList = uniqueMap.values.toList();
+        
+        // Sort descending by date
+        uniqueList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        
+        controller.add(uniqueList);
       }
 
       // Dengarkan perubahan pada stream 1

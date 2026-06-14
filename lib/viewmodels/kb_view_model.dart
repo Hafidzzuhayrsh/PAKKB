@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/kb_service.dart';
 import '../model/kb_model.dart';
 
+import '../services/notification_service.dart';
+
 class KbViewModel extends ChangeNotifier {
   final FirebaseService _service = FirebaseService();
   List<KbModel> _listPendaftaran = [];
@@ -50,6 +52,15 @@ class KbViewModel extends ChangeNotifier {
           data.userId = user.uid;
         }
         await _service.addPendaftaran(data);
+        
+        // Send Notification for new registration
+        if (user != null) {
+          await NotificationService().sendNotification(
+            userId: user.uid,
+            title: "Pendaftaran KB Berhasil",
+            body: "Pendaftaran KB ${data.layanan} untuk ${data.nama} telah berhasil dikirim.",
+          );
+        }
       }
       await fetchPendaftaran(nik: data.nik);
     } catch (e) {
