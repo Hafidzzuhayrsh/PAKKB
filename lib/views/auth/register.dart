@@ -34,14 +34,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    try {
-      final success = await authProvider.signUp(
-        _emailController.text.trim(),
-        _passwordController.text,
-        _nameController.text.trim(),
-        _nikController.text.trim(),
-        _phoneController.text.trim(),
-      );
+    final success = await authProvider.signUp(
+      _emailController.text,
+      _passwordController.text,
+      _nameController.text,
+      _nikController.text, 
+    );
 
       if (!mounted) return;
 
