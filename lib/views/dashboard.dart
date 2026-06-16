@@ -10,8 +10,10 @@ import 'package:app_pengaduan/views/kategori_pengaduan.dart';
 import 'package:app_pengaduan/views/informasi_kesehatan.dart';
 import 'package:app_pengaduan/views/keluarga_berencana.dart';
 import 'package:app_pengaduan/views/notification_page.dart';
+import 'package:app_pengaduan/views/layanan_kami_page.dart'; // [NEW] Added LayananKamiPage
 import 'package:app_pengaduan/services/pengaduan_service.dart';
-import 'package:app_pengaduan/services/kb_service.dart' as kb_service; // [NEW] KB Service
+import 'package:app_pengaduan/services/kb_service.dart'
+    as kb_service; // [NEW] KB Service
 import 'package:app_pengaduan/model/pengaduan_model.dart';
 import 'package:app_pengaduan/model/kb_model.dart'; // [NEW] KB Model
 import 'package:provider/provider.dart';
@@ -30,9 +32,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   final List<Widget> _pages = [
     const HomeContent(),
-    const KonsultasiMainPage(), // Services
-    const ChatListPage(),       // Chat
-    const ProfilePage(),        // Profile
+    const LayananKamiPage(), // Services
+    const ChatListPage(), // Chat
+    const ProfilePage(), // Profile
   ];
 
   @override
@@ -64,10 +66,26 @@ class _DashboardPageState extends State<DashboardPage> {
           showUnselectedLabels: true,
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view), label: 'Services'),
-            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Chat'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.grid_view_outlined),
+              activeIcon: Icon(Icons.grid_view),
+              label: 'Services',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline),
+              activeIcon: Icon(Icons.chat_bubble),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile',
+            ),
           ],
         ),
       ),
@@ -85,19 +103,34 @@ class HomeContent extends StatefulWidget {
 class _HomeContentState extends State<HomeContent> {
   Key _refreshKey = UniqueKey();
 
-  Future<List<dynamic>> _fetchCombinedHistory(String userId, String? nik) async {
+  Future<List<dynamic>> _fetchCombinedHistory(
+    String userId,
+    String? nik,
+  ) async {
     // We use first to get the latest snapshot of the stream as a future
-    final pengaduanStream = PengaduanService().getMyHistory(userId: userId, nik: nik).first;
-    final kbFuture = kb_service.FirebaseService().getPendaftaran(userId: userId, nik: nik);
-    
+    final pengaduanStream = PengaduanService()
+        .getMyHistory(userId: userId, nik: nik)
+        .first;
+    final kbFuture = kb_service.FirebaseService().getPendaftaran(
+      userId: userId,
+      nik: nik,
+    );
+
     final results = await Future.wait([pengaduanStream, kbFuture]);
-    final list = [...results[0] as List<PengaduanModel>, ...results[1] as List<KbModel>];
-    
+    final list = [
+      ...results[0] as List<PengaduanModel>,
+      ...results[1] as List<KbModel>,
+    ];
+
     // Sort descending by date
     list.sort((a, b) {
-       DateTime dateA = a is PengaduanModel ? a.createdAt ?? DateTime.now() : (a as KbModel).tanggal;
-       DateTime dateB = b is PengaduanModel ? b.createdAt ?? DateTime.now() : (b as KbModel).tanggal;
-       return dateB.compareTo(dateA);
+      DateTime dateA = a is PengaduanModel
+          ? a.createdAt ?? DateTime.now()
+          : (a as KbModel).tanggal;
+      DateTime dateB = b is PengaduanModel
+          ? b.createdAt ?? DateTime.now()
+          : (b as KbModel).tanggal;
+      return dateB.compareTo(dateA);
     });
     return list;
   }
@@ -105,7 +138,9 @@ class _HomeContentState extends State<HomeContent> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<custom_auth.AuthProvider>();
-    final userId = authProvider.currentUserData?.uid ?? FirebaseAuth.instance.currentUser?.uid;
+    final userId =
+        authProvider.currentUserData?.uid ??
+        FirebaseAuth.instance.currentUser?.uid;
     final nik = authProvider.currentUserData?.nik;
 
     return SafeArea(
@@ -135,14 +170,16 @@ class _HomeContentState extends State<HomeContent> {
                         fontSize: 12,
                         color: AppTheme.textSecondary,
                       ),
-                    )
+                    ),
                   ],
                 ),
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const NotificationPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationPage(),
+                      ),
                     );
                   },
                   child: Stack(
@@ -159,7 +196,7 @@ class _HomeContentState extends State<HomeContent> {
                             shape: BoxShape.circle,
                           ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -192,7 +229,10 @@ class _HomeContentState extends State<HomeContent> {
                 ),
                 TextButton(
                   onPressed: () {},
-                  child: const Text("Lihat Semua", style: TextStyle(color: AppTheme.primary)),
+                  child: const Text(
+                    "Lihat Semua",
+                    style: TextStyle(color: AppTheme.primary),
+                  ),
                 ),
               ],
             ),
@@ -202,17 +242,17 @@ class _HomeContentState extends State<HomeContent> {
               child: Row(
                 children: [
                   _buildNewsCard(
-                    'Pembangunan Taman Terbuka Hijau Tahap III Dimulai', 
+                    'Pembangunan Taman Terbuka Hijau Tahap III Dimulai',
                     '10 Okt 2024',
                     'https://loremflickr.com/400/200/health,clinic?lock=1',
                   ),
                   _buildNewsCard(
-                    'Jadwal Pelayanan Posyandu Balita Bulan Oktober', 
+                    'Jadwal Pelayanan Posyandu Balita Bulan Oktober',
                     '09 Okt 2024',
                     'https://loremflickr.com/400/200/health,hospital?lock=2',
                   ),
                   _buildNewsCard(
-                    'Program Vaksinasi Massal di Puskesmas Terpadu', 
+                    'Program Vaksinasi Massal di Puskesmas Terpadu',
                     '12 Okt 2024',
                     'https://loremflickr.com/400/200/medical,doctor?lock=3',
                   ),
@@ -220,7 +260,7 @@ class _HomeContentState extends State<HomeContent> {
               ),
             ),
             const SizedBox(height: 24),
-// testing
+            // testing
             // Kategori Layanan
             const Text(
               "Kategori Layanan",
@@ -232,34 +272,56 @@ class _HomeContentState extends State<HomeContent> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildCategoryItem(
-                  context, 
-                  "Konsultasi", 
-                  Icons.support_agent, 
+                  context,
+                  "Konsultasi",
+                  Icons.support_agent,
                   const Color(0xFFE6F4EA),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatKonsultasiPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const KonsultasiMainPage(),
+                    ),
+                  ),
                 ),
                 _buildCategoryItem(
-                  context, 
-                  "Pengaduan", 
-                  Icons.campaign_outlined, 
+                  context,
+                  "Pengaduan",
+                  Icons.campaign_outlined,
                   const Color(0xFFFFF0F0),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const KategoriPengaduanPage())),
+                  onTap: () =>
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const KategoriPengaduanPage(),
+                        ),
+                      ).then((_) {
+                        setState(() => _refreshKey = UniqueKey());
+                      }),
                 ),
                 _buildCategoryItem(
-                  context, 
-                  "Daftar KB", 
-                  Icons.family_restroom, 
+                  context,
+                  "Daftar KB",
+                  Icons.family_restroom,
                   const Color(0xFFF0F9FF),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const KbFormPage())).then((_) {
-                    setState(() => _refreshKey = UniqueKey());
-                  }),
+                  onTap: () =>
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const KbFormPage()),
+                      ).then((_) {
+                        setState(() => _refreshKey = UniqueKey());
+                      }),
                 ),
                 _buildCategoryItem(
-                  context, 
-                  "Informasi", 
-                  Icons.info_outline, 
+                  context,
+                  "Informasi",
+                  Icons.info_outline,
                   const Color(0xFFFFF7ED),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InformasiKesehatanPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const InformasiKesehatanPage(),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -278,8 +340,8 @@ class _HomeContentState extends State<HomeContent> {
                     setState(() {
                       _refreshKey = UniqueKey();
                     });
-                  }, 
-                  icon: const Icon(Icons.refresh, size: 20)
+                  },
+                  icon: const Icon(Icons.refresh, size: 20),
                 ),
               ],
             ),
@@ -296,41 +358,71 @@ class _HomeContentState extends State<HomeContent> {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Text("Belum ada aktivitas terbaru.", style: TextStyle(color: AppTheme.textSecondary)),
+                        child: Text(
+                          "Belum ada aktivitas terbaru.",
+                          style: TextStyle(color: AppTheme.textSecondary),
+                        ),
                       ),
                     );
                   }
 
-                  final activities = snapshot.data!.take(5).toList(); // Show top 5
+                  final activities = snapshot.data!
+                      .take(5)
+                      .toList(); // Show top 5
                   return Column(
                     children: activities.map((activity) {
                       bool isPengaduan = activity is PengaduanModel;
-                      
-                      String title = isPengaduan ? (activity.judul ?? 'Laporan Pengaduan') : 'Pendaftaran KB ${(activity as KbModel).layanan}';
-                      String statusRaw = isPengaduan ? activity.status : (activity as KbModel).status;
-                      
-                      bool isResolved = statusRaw.toLowerCase() == 'selesai' || statusRaw.toLowerCase() == 'disetujui';
-                      Color statusColor = isResolved ? AppTheme.primary : Colors.blue;
-                      String statusText = isResolved ? 'Selesai' : 'Dalam Proses';
-                      
+
+                      String title = isPengaduan
+                          ? (activity.judul ?? 'Laporan Pengaduan')
+                          : 'Pendaftaran KB ${(activity as KbModel).layanan}';
+                      String statusRaw = isPengaduan
+                          ? activity.status
+                          : (activity as KbModel).status;
+
+                      bool isResolved =
+                          statusRaw.toLowerCase() == 'selesai' ||
+                          statusRaw.toLowerCase() == 'disetujui';
+                      Color statusColor = isResolved
+                          ? AppTheme.primary
+                          : Colors.blue;
+                      String statusText = isResolved
+                          ? 'Selesai'
+                          : 'Dalam Proses';
+
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: _buildActivityCard(
-                          title, 
-                          statusText, 
+                          title,
+                          statusText,
                           statusColor,
-                          isPengaduan ? Icons.assignment : Icons.family_restroom,
+                          isPengaduan
+                              ? Icons.assignment
+                              : Icons.family_restroom,
                           onTap: () {
                             if (isPengaduan) {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailPengaduanPage(pengaduan: activity as PengaduanModel))).then((_) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => DetailPengaduanPage(
+                                    pengaduan: activity as PengaduanModel,
+                                  ),
+                                ),
+                              ).then((_) {
                                 setState(() => _refreshKey = UniqueKey());
                               });
                             } else {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailKbPage(kb: activity as KbModel))).then((_) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      DetailKbPage(kb: activity as KbModel),
+                                ),
+                              ).then((_) {
                                 setState(() => _refreshKey = UniqueKey());
                               });
                             }
-                          }
+                          },
                         ),
                       );
                     }).toList(),
@@ -338,7 +430,9 @@ class _HomeContentState extends State<HomeContent> {
                 },
               )
             else
-              const Center(child: Text("Silakan login untuk melihat aktivitas terbaru.")),
+              const Center(
+                child: Text("Silakan login untuk melihat aktivitas terbaru."),
+              ),
           ],
         ),
       ),
@@ -360,7 +454,9 @@ class _HomeContentState extends State<HomeContent> {
             height: 120,
             decoration: BoxDecoration(
               color: const Color(0xFFD1D5DB),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               image: DecorationImage(
                 image: NetworkImage(imageUrl),
                 fit: BoxFit.cover,
@@ -374,24 +470,36 @@ class _HomeContentState extends State<HomeContent> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   date,
-                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryItem(BuildContext context, String title, IconData icon, Color bgColor, {VoidCallback? onTap}) {
+  Widget _buildCategoryItem(
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color bgColor, {
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -415,7 +523,13 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildActivityCard(String title, String status, Color statusColor, IconData icon, {VoidCallback? onTap}) {
+  Widget _buildActivityCard(
+    String title,
+    String status,
+    Color statusColor,
+    IconData icon, {
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -440,19 +554,38 @@ class _HomeContentState extends State<HomeContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       const SizedBox(width: 4),
-                      Text(status, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text(
+                        status,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      const Text('Baru saja', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                      const Text(
+                        'Baru saja',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ],
